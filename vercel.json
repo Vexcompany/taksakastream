@@ -28,7 +28,7 @@
   "headers": [
     {
       "source": "/api/schedule",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=300" }]
+      "headers": [{ "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, max-age=0" }]
     },
     {
       "source": "/api/(.*)",

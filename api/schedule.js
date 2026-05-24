@@ -3,8 +3,7 @@ const { getSchedule } = require("../lib/anoboy")
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
-  // Cache 1 hour — schedule rarely changes
-  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=300")
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
   if (req.method === "OPTIONS") return res.status(200).end()
 
   try {

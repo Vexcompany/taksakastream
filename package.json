@@ -7,12 +7,19 @@
     "node": ">=24.x"
   },
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "@supabase/supabase-js": "^2.31.0",
+    "cheerio": "^1.0.0",
+    "jsonwebtoken": "^9.0.3"
   },
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod"
   },
-  "keywords": ["anime", "stream", "scraper", "anoboy"],
+  "keywords": [
+    "anime",
+    "stream",
+    "scraper",
+    "anoboy"
+  ],
   "license": "MIT"
 }

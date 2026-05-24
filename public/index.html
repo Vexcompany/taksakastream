@@ -7,6 +7,7 @@
 <meta name="description" content="Nonton anime sub Indo gratis. Ribuan judul, streaming langsung, tanpa iklan.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
 <style>
 :root{--gold:#c9a84c;--gold-dim:#8a6b2a;--gold-glow:#e8c96a;--dark-base:#0a0a0f;--dark-card:#111118;--dark-surface:#16161f;--border:rgba(201,168,76,.18);--border-h:rgba(201,168,76,.45);--text:#f0ead8;--text2:#9a9080;--muted:#5a5248;--red:#c0392b}
@@ -119,6 +120,20 @@ nav{position:sticky;top:0;z-index:200;background:rgba(10,10,15,.92);backdrop-fil
 .si-time{font-size:10px;color:var(--muted)}
 .sched-empty{color:var(--muted);font-size:12.5px;padding:1.5rem;text-align:center}
 
+/* AUTH */
+.auth-panel{background:rgba(16,16,22,.98);border:.5px solid var(--border);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);position:fixed;inset:0;margin:auto;max-width:420px;padding:1.75rem;z-index:500;display:none;overflow:auto}
+.auth-panel.open{display:block}
+.auth-panel h3{font-family:'Cinzel',serif;font-size:1.35rem;font-weight:700;margin-bottom:.75rem;color:var(--gold)}
+.auth-panel p{font-size:12.5px;color:var(--text2);margin-bottom:1rem}
+.auth-panel label{display:block;font-size:11px;color:var(--text2);margin:12px 0 6px}
+.auth-panel input, .auth-panel select{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px}
+.auth-panel .auth-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem}
+.auth-panel .auth-actions .btn{flex:1}
+.auth-panel .auth-note{font-size:11px;color:var(--muted);margin-top:1rem}
+.auth-bar{display:flex;align-items:center;gap:12px;justify-content:flex-end}
+.auth-pill{font-size:11px;color:var(--gold);background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.18);border-radius:999px;padding:5px 12px}
+.auth-link{font-size:11px;color:var(--text2);text-decoration:underline;cursor:pointer}
+
 /* DETAIL PAGE */
 .back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text2);font-size:12.5px;cursor:pointer;padding:.4rem 0;transition:color .2s;margin-bottom:1.4rem;background:none;border:none;font-family:'DM Sans',sans-serif}
 .back-btn:hover{color:var(--gold)}
@@ -213,6 +228,10 @@ footer{position:relative;z-index:1;border-top:.5px solid var(--border);padding:1
     <li><a onclick="gotoSection('sec-genre')">Genre</a></li>
     <li><a onclick="gotoSection('sec-api')">API</a></li>
   </ul>
+  <div class="auth-bar" id="auth-bar">
+    <span class="auth-pill" id="auth-badge">Guest</span>
+    <button class="btn btn-ghost btn-sm" id="auth-button" onclick="openAuthPanel()">Login</button>
+  </div>
   <div class="sw">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <input type="text" id="search-input" placeholder="Cari anime..." autocomplete="off">
@@ -224,7 +243,46 @@ footer{position:relative;z-index:1;border-top:.5px solid var(--border);padding:1
      HOME
 ═══════════════════════════ -->
 <div id="page-home" class="page active">
-
+  <div id="auth-panel" class="auth-panel" style="display:none">
+    <h3>Masuk Anggota / Google</h3>
+    <p>Pilih login untuk anggota Pagaska atau pengguna umum melalui Google.</p>
+    <div id="auth-message" style="color:var(--muted);font-size:12px;margin-bottom:1rem"></div>
+    <div id="auth-member-form">
+      <label>Nama Lengkap</label>
+      <input type="text" id="member-fullname" placeholder="Nama lengkap" autocomplete="name">
+      <label>Jabatan</label>
+      <select id="member-jabatan">
+        <option value="">Pilih jabatan</option>
+        <option>Ketua Umum</option>
+        <option>Wakil Ketua Umum</option>
+        <option>Sekretaris</option>
+        <option>Bendahara</option>
+        <option>DTP</option>
+        <option>Koor GK3</option>
+        <option>Koor DIsarda</option>
+        <option>Koor Infokom</option>
+      </select>
+      <label>Generasi</label>
+      <select id="member-generasi">
+        <option value="">Pilih generasi</option>
+        <option>generasi 1</option>
+        <option>generasi 2</option>
+        <option>generasi 3</option>
+        <option>generasi 4</option>
+      </select>
+      <div class="auth-actions">
+        <button class="btn btn-gold btn-sm" onclick="submitMemberLogin()">Login Anggota</button>
+        <button class="btn btn-ghost btn-sm" onclick="submitMemberRegister()">Daftar Anggota</button>
+      </div>
+    </div>
+    <div style="margin:1.2rem 0;border-top:1px solid rgba(255,255,255,.08)"></div>
+    <div id="auth-google-section">
+      <div id="google-login-button"></div>
+      <div style="margin-top:1rem;font-size:11px;color:var(--muted)">Atau gunakan Google untuk login pengguna umum.</div>
+    </div>
+    <div class="auth-note">Seluruh sesi disimpan di browser, dan informasi anggota disimpan di Supabase.</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem"><button class="btn btn-ghost btn-sm" onclick="closeAuthPanel()">Tutup</button></div>
+  </div>
   <div class="hero">
     <p class="hero-eye">✦ Naga Penguasa Streaming ✦</p>
     <h1><em>Nonton Anime</em><br>Sub Indo Gratis</h1>
@@ -235,8 +293,7 @@ footer{position:relative;z-index:1;border-top:.5px solid var(--border);padding:1
       </button>
       <button class="btn btn-ghost" onclick="gotoSection('sec-api')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Lihat API
-      </button>
-    </div>
+      </button>      <button class="btn btn-ghost btn-sm" onclick="openAuthPanel()">Login</button>    </div>
   </div>
 
   <!-- Featured -->
@@ -581,6 +638,161 @@ function renderSchedDay(day) {
   }).join('')}</div>`
 }
 
+let authUser = null
+let authToken = null
+let googleClientId = null
+
+function openAuthPanel() {
+  document.getElementById('auth-panel').style.display = 'block'
+  loadAuthConfig()
+}
+
+function closeAuthPanel() {
+  document.getElementById('auth-panel').style.display = 'none'
+}
+
+function setAuthMessage(message, isError = false) {
+  const el = document.getElementById('auth-message')
+  el.textContent = message || ''
+  el.style.color = isError ? '#f87171' : 'var(--muted)'
+}
+
+function saveAuthState(user, token) {
+  authUser = user
+  authToken = token
+  localStorage.setItem('taksaka_auth_user', JSON.stringify(user))
+  localStorage.setItem('taksaka_auth_token', token)
+  renderAuthBar()
+}
+
+function clearAuthState() {
+  authUser = null
+  authToken = null
+  localStorage.removeItem('taksaka_auth_user')
+  localStorage.removeItem('taksaka_auth_token')
+  renderAuthBar()
+}
+
+function renderAuthBar() {
+  const badge = document.getElementById('auth-badge')
+  const button = document.getElementById('auth-button')
+  if (authUser) {
+    badge.textContent = authUser.fullname || authUser.email || 'Member'
+    button.textContent = 'Logout'
+    button.onclick = logout
+  } else {
+    badge.textContent = 'Guest'
+    button.textContent = 'Login'
+    button.onclick = openAuthPanel
+  }
+}
+
+async function loadAuthConfig() {
+  try {
+    const res = await fetch(`${BASE}/api/config`)
+    const data = await res.json()
+    if (data.status && data.data?.google_client_id) {
+      googleClientId = data.data.google_client_id
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredentialResponse,
+        })
+        window.google.accounts.id.renderButton(document.getElementById('google-login-button'), {
+          theme: 'outline', size: 'large', width: '100%', text: 'signin_with', shape: 'rectangular'
+        })
+      }
+      document.getElementById('auth-google-section').style.display = 'block'
+    } else {
+      document.getElementById('auth-google-section').style.display = 'none'
+    }
+  } catch (err) {
+    document.getElementById('auth-google-section').style.display = 'none'
+  }
+}
+
+async function submitMemberLogin() {
+  setAuthMessage('Memproses login anggota...')
+  const fullname = document.getElementById('member-fullname').value.trim()
+  const jabatan = document.getElementById('member-jabatan').value
+  const generasi = document.getElementById('member-generasi').value
+  if (!fullname || !jabatan || !generasi) {
+    return setAuthMessage('Semua field anggota harus diisi.', true)
+  }
+  try {
+    const res = await fetch(`${BASE}/api/auth/member`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullname, jabatan, generasi })
+    })
+    const data = await res.json()
+    if (!data.status) throw new Error(data.message)
+    saveAuthState(data.user, data.token)
+    setAuthMessage('Login berhasil.')
+    closeAuthPanel()
+  } catch (err) {
+    setAuthMessage(err.message || 'Login anggota gagal.', true)
+  }
+}
+
+async function submitMemberRegister() {
+  setAuthMessage('Mendaftar anggota...')
+  const fullname = document.getElementById('member-fullname').value.trim()
+  const jabatan = document.getElementById('member-jabatan').value
+  const generasi = document.getElementById('member-generasi').value
+  if (!fullname || !jabatan || !generasi) {
+    return setAuthMessage('Semua field anggota harus diisi.', true)
+  }
+  try {
+    const res = await fetch(`${BASE}/api/auth/member`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'register', fullname, jabatan, generasi })
+    })
+    const data = await res.json()
+    if (!data.status) throw new Error(data.message)
+    setAuthMessage(data.message || 'Akun anggota terdaftar, silakan login.')
+  } catch (err) {
+    setAuthMessage(err.message || 'Pendaftaran anggota gagal.', true)
+  }
+}
+
+async function handleGoogleCredentialResponse(response) {
+  if (!response?.credential) {
+    return setAuthMessage('Google login gagal, coba lagi.', true)
+  }
+  setAuthMessage('Memproses login Google...')
+  try {
+    const res = await fetch(`${BASE}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: response.credential })
+    })
+    const data = await res.json()
+    if (!data.status) throw new Error(data.message)
+    saveAuthState(data.user, data.token)
+    setAuthMessage('Login Google berhasil.')
+    closeAuthPanel()
+  } catch (err) {
+    setAuthMessage(err.message || 'Login Google gagal.', true)
+  }
+}
+
+async function logout() {
+  clearAuthState()
+  setAuthMessage('Anda keluar.')
+}
+
+function attemptResumeSession() {
+  const savedUser = localStorage.getItem('taksaka_auth_user')
+  const savedToken = localStorage.getItem('taksaka_auth_token')
+  if (savedUser && savedToken) {
+    authUser = JSON.parse(savedUser)
+    authToken = savedToken
+  }
+  renderAuthBar()
+}
+
 // ─── DETAIL ──────────────────────────────────────────
 async function openDetail(url) {
   if (!url) return
@@ -756,6 +968,7 @@ async function searchAndOpen(q) {
 // ─── INIT ─────────────────────────────────────────────
 ;(async () => {
   document.getElementById('base-url-disp').textContent = BASE
+  attemptResumeSession()
   await Promise.all([ loadLatest(1), loadSchedule() ])
 })()
 </script>

@@ -1,6 +1,6 @@
 const { getLatest } = require("../lib/anoboy")
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=60")

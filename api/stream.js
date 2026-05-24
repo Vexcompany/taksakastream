@@ -1,19 +1,13 @@
 const { getStreamUrl } = require("../lib/anoboy")
-const { authenticateRequest } = require("../lib/auth")
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
   if (req.method === "OPTIONS") return res.status(200).end()
 
-  try {
-    authenticateRequest(req)
-  } catch (err) {
-    return res.status(401).json({ status: false, message: err.message })
-  }
-
+  // Endpoint ini publik — tidak perlu token
   const episodeUrl = req.query.q
   if (!episodeUrl) {
     return res.status(400).json({ status: false, message: "Parameter ?q=<episode_url> wajib diisi" })

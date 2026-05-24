@@ -1,0 +1,4 @@
+Changes to make:
+1. Remove all MAL code, use Jikan only
+2. JIKAN_TIMEOUT = 30000
+3. Add retry with delay for jikanFetch

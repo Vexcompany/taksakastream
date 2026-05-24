@@ -801,7 +801,9 @@ async function openDetail(url) {
   const wrap = document.getElementById('det-wrap')
   wrap.innerHTML = `<div class="grid-msg" style="grid-column:1/-1"><span class="spin"></span>Memuat detail anime...</div>`
   try {
-    const res  = await fetch(`${BASE}/api/detail?url=${encodeURIComponent(url)}`)
+    const res  = await fetch(`${BASE}/api/detail?url=${encodeURIComponent(url)}`, {
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    })
     const data = await res.json()
     if (!data.status) throw new Error(data.message)
     const d = data.data
@@ -877,7 +879,9 @@ async function openPlayer(idx) {
 
   try {
     ptxt.textContent = 'Menghubungi TaksakaAPI...'
-    const res  = await fetch(`${BASE}/api/stream?q=${encodeURIComponent(ep.url)}`)
+    const res  = await fetch(`${BASE}/api/stream?q=${encodeURIComponent(ep.url)}`, {
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    })
     const data = await res.json()
 
     document.getElementById('p-meta').innerHTML = `

@@ -77,6 +77,9 @@ Base URL: `https://your-project.vercel.app`
 | GET | `/api/detail` | `?url=anime_url` | Detail anime + daftar episode |
 | GET | `/api/episode` | `?url=ep_url` | Detail episode + link download |
 | GET | `/api/stream` | `?q=ep_url` | Direct stream / m3u8 URL |
+| POST | `/api/auth/member` | JSON { action, fullname, jabatan, generasi } | Member login / register |
+| POST | `/api/auth/google` | JSON { idToken } | Public Google login |
+| GET | `/api/auth/me` | Authorization: Bearer <token> | Validasi sesi user |
 
 ### Contoh Request
 
@@ -108,6 +111,32 @@ curl "https://your-project.vercel.app/api/stream?q=https://anoboy.be/episode/aly
 ```
 
 ---
+
+## Auth dan environment
+
+Beberapa endpoint internal sekarang memerlukan token otentikasi:
+ - `/api/detail` — memerlukan `Authorization: Bearer <token>`
+ - `/api/stream` — memerlukan `Authorization: Bearer <token>`
+
+Gunakan `/api/auth/member` untuk login anggota Pagaska dan `/api/auth/google` untuk login pengguna umum.
+
+### Vercel environment variables
+
+Tambahkan variabel berikut di Vercel Dashboard atau via CLI:
+ - `SUPABASE_URL` — URL Supabase project
+ - `SUPABASE_SERVICE_KEY` — service role key untuk backend
+ - `GOOGLE_CLIENT_ID` — Google OAuth Web client ID
+ - `JWT_SECRET` — rahasia JWT untuk sign/verify token
+
+Contoh `.env` lokal:
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-key
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+JWT_SECRET=some-long-secret-value
+```
+
+Untuk seed Supabase members dari data eksternal, gunakan `scripts/seed-supabase-members.js` dan jalankan SQL di `supabase.sql`.
 
 ## Provider yang Didukung
 

@@ -31,8 +31,9 @@ module.exports = async function handler(req, res) {
 
     let result
     if (action === 'register') {
-      const member = await registerMember(payload)
-      result = { user: member, token: null, message: 'Akun anggota terdaftar. Silakan login.' }
+      await registerMember(payload)
+      result = await memberLogin(payload)
+      result.message = 'Akun anggota terdaftar dan Anda telah login.'
     } else {
       result = await memberLogin(payload)
     }

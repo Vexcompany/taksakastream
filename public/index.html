@@ -401,8 +401,10 @@ function gotoSection(id) {
 // ─── MAKE CARD ──────────────────────────────────────
 // Uses onclick with encoded URL → no href="#", no scroll-to-top
 function makeCard(item) {
-  const sc   = (item.status||'').toLowerCase().includes('ongoing') ? 'b-on' : 'b-end'
+  const status = item.status || ''
+  const sc   = status.toLowerCase().includes('airing') || status.toLowerCase().includes('ongoing') ? 'b-on' : 'b-end'
   const ep   = item.ep || item.episode || ''
+  const score = item.score ? `<span class="b b-ep" style="background:#f59e0b22;color:#f59e0b">★ ${item.score}</span>` : ''
   const safeUrl = item.url ? item.url.replace(/"/g,'&quot;') : ''
   const img  = item.thumbnail
     ? `<img class="cimg" src="${item.thumbnail}" alt="" loading="lazy" onerror="this.outerHTML='<div class=cph>ANIME</div>'">`
@@ -417,7 +419,8 @@ function makeCard(item) {
       <div class="ctitle">${item.title}</div>
       <div class="cmeta">
         ${ep?`<span class="b b-ep">${ep}</span>`:''}
-        <span class="b ${sc}">${item.status||'?'}</span>
+        ${score}
+        <span class="b ${sc}">${status||'?'}</span>
         <span class="b b-t">${item.type||'TV'}</span>
       </div>
     </div>
@@ -454,7 +457,7 @@ async function loadLatest(page = 1) {
 
 function updateFeatured(item) {
   document.getElementById('feat-title').textContent = item.title
-  document.getElementById('feat-syn').textContent   = ''
+  document.getElementById('feat-syn').textContent   = item.synopsis ? item.synopsis.slice(0,160)+'…' : ''
   const btn = document.getElementById('feat-btn')
   btn.onclick = () => openDetail(item.url)
   const iw = document.querySelector('.feat-iw')

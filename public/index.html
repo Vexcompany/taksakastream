@@ -439,6 +439,7 @@ document.getElementById('base-url-disp').textContent = BASE
 // ─── STATE ──────────────────────────────────────────
 let curAnimeUrl   = null
 let curAnimeTitle = null
+let curMalId      = null
 let curEpisodes   = []
 let curEpUrl      = null
 let gridMode    = 'latest'   // 'latest' | genre slug
@@ -810,6 +811,7 @@ async function openDetail(url) {
     const d = data.data
     curEpisodes   = d.episode_list || []
     curAnimeTitle = d.title || null
+    curMalId      = d.mal_id || null
 
     const poster = d.thumbnail
       ? `<img src="${d.thumbnail}" alt="${d.title}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block" onerror="this.parentNode.innerHTML='🎬'">`
@@ -864,75 +866,108 @@ async function openPlayer(idx) {
       ${e.release_date?`<div class="esi-d">${e.release_date}</div>`:''}
     </div>`).join('')
 
-  // Reset player
+  // Reset player — tampilkan loading sebelum embed dimuat
   const vbox = document.getElementById('vbox')
   vbox.innerHTML = `
-    <video id="vid" controls playsinline style="width:100%;height:100%;display:block;background:#000"></video>
-    <div class="vload" id="vload">
+    <div class="vload" id="vload" style="display:flex">
       <div class="spin" style="width:26px;height:26px;border-width:3px"></div>
-      <span id="vload-txt">Mengekstrak stream URL...</span>
+      <span id="vload-txt">Menyiapkan player...</span>
     </div>`
-  const vid   = document.getElementById('vid')
-  const vload = document.getElementById('vload')
-  const ptxt  = document.getElementById('vload-txt')
 
   document.getElementById('p-ttl').textContent  = ep.title || `Episode ${ep.episode}`
   document.getElementById('p-meta').innerHTML   = ''
 
-  // Bangun URL stream — kirim title+ep agar backend bisa cari URL anoboy via search
-  // jika ep.url null (Jikan tidak punya URL anoboy)
-  const streamParams = new URLSearchParams()
-  if (ep.url && ep.url !== 'null') streamParams.set('q', ep.url)
-  if (curAnimeTitle) streamParams.set('title', curAnimeTitle)
-  if (ep.episode)    streamParams.set('ep',    ep.episode)
+  // Bangun embed URL langsung di frontend — tidak perlu scraping server
+  // Gunakan mal_id + episode number untuk URL yang deterministik
+  const epNum = ep.episode || '1'
+  const embedSources = buildEmbedSources(curMalId, curAnimeTitle, epNum)
+  curEmbedSources = embedSources
+  curEmbedIdx     = 0
+  loadEmbed(0)
+}
 
-  try {
-    ptxt.textContent = 'Menghubungi TaksakaAPI...'
-    const res  = await fetch(`${BASE}/api/stream?${streamParams.toString()}`, {
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+// ─── EMBED PLAYER ────────────────────────────────────
+let curEmbedSources = []
+let curEmbedIdx     = 0
+
+/**
+ * Bangun daftar embed URL dari berbagai provider berdasarkan mal_id + judul + episode.
+ * Semua URL ini dikonstruksi langsung di frontend — tidak ada server request ke anoboy.
+ */
+function buildEmbedSources(malId, title, ep) {
+  const sources = []
+  const epNum = String(ep).replace(/\D/g,'') || '1'
+  const slug  = (title||'').toLowerCase()
+    .replace(/[^a-z0-9\s-]/g,'').trim()
+    .replace(/\s+/g,'-')
+
+  // Provider 1: 2anime.xyz — support mal_id langsung
+  if (malId) {
+    sources.push({
+      label: '2Anime',
+      url: `https://2anime.xyz/embed/${malId}-episode-${epNum}`
     })
-    const data = await res.json()
+  }
 
-    document.getElementById('p-meta').innerHTML = `
-      <span class="ptag">Provider: ${data.provider||'?'}</span>
-      <span class="ptag">Format: ${(data.type||'?').toUpperCase()}</span>
-      ${data.fallback?'<span class="ptag" style="color:#f87171">Fallback</span>':''}`
+  // Provider 2: Aniwatch / Kaido embed berdasarkan mal_id
+  if (malId) {
+    sources.push({
+      label: 'AniWatch',
+      url: `https://aniwatch.to/watch/${slug}-${malId}?ep=${epNum}`
+    })
+  }
 
-    if (data.status && data.stream_url && data.type !== 'iframe') {
-      ptxt.textContent = 'Memuat video...'
-      if (data.type === 'm3u8') {
-        if (Hls.isSupported()) {
-          const hls = new Hls()
-          hls.loadSource(data.stream_url)
-          hls.attachMedia(vid)
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { vload.style.display='none'; vid.play().catch(()=>{}) })
-          hls.on(Hls.Events.ERROR, (_,d) => { if(d.fatal) useIframe(data.stream_url) })
-          vid._hls = hls
-        } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-          vid.src = data.stream_url
-          vid.addEventListener('loadedmetadata', ()=>{ vload.style.display='none'; vid.play() },{once:true})
-        } else { showPlayerError('Browser tidak mendukung HLS') }
-      } else {
-        vid.src = data.stream_url
-        vid.addEventListener('loadeddata',  ()=>{ vload.style.display='none' },{once:true})
-        vid.addEventListener('error',       ()=>{ showPlayerError('Video gagal dimuat') },{once:true})
-        vid.load(); vid.play().catch(()=>{})
-        vload.style.display = 'none'
-      }
-    } else if (data.stream_url) {
-      useIframe(data.stream_url)
-    } else {
-      showPlayerError(data.message || 'Stream tidak tersedia')
-    }
-  } catch(err) { showPlayerError(err.message || 'Terjadi kesalahan') }
+  // Provider 3: Gogoanime via slug
+  if (slug) {
+    sources.push({
+      label: 'Gogo (dub)',
+      url: `https://gogoanime3.cc/watch/${slug}-episode-${epNum}`
+    })
+    sources.push({
+      label: 'Gogo (sub)',
+      url: `https://gogoanime3.cc/watch/${slug}-dub-episode-${epNum}`
+    })
+  }
+
+  // Provider 4: Anoboy langsung via slug (fallback)
+  if (slug) {
+    sources.push({
+      label: 'Anoboy',
+      url: `https://anoboy.be/${slug}-episode-${String(epNum).padStart(2,'0')}/`
+    })
+  }
+
+  return sources
+}
+
+function loadEmbed(idx) {
+  if (!curEmbedSources.length) {
+    showPlayerError('Tidak ada sumber video tersedia')
+    return
+  }
+  curEmbedIdx = idx
+  const src = curEmbedSources[idx]
+  const vload = document.getElementById('vload')
+  if (vload) vload.style.display = 'none'
+
+  // Render iframe + tombol ganti provider
+  const btnHtml = curEmbedSources.map((s,i) =>
+    `<button onclick="loadEmbed(${i})" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:${i===idx?'var(--accent)':'var(--card)'};color:${i===idx?'#fff':'var(--text)'};cursor:pointer;font-size:12px">${s.label}</button>`
+  ).join('')
+
+  document.getElementById('vbox').innerHTML =
+    `<iframe src="${src.url}" style="width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;encrypted-media"></iframe>`
+
+  document.getElementById('p-meta').innerHTML =
+    `<span style="font-size:11.5px;color:var(--muted)">Sumber:</span> ${btnHtml}`
 }
 
 function useIframe(src) {
   if (!src || src === 'null') { showPlayerError('URL video tidak tersedia'); return }
+  const vload = document.getElementById('vload')
+  if (vload) vload.style.display = 'none'
   document.getElementById('vbox').innerHTML =
-    `<iframe src="${src}" style="width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen"></iframe>`
-  document.getElementById('p-meta').insertAdjacentHTML('beforeend',
-    '<span class="ptag" style="color:#f87171">Iframe Mode</span>')
+    `<iframe src="${src}" style="width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen;encrypted-media"></iframe>`
 }
 
 function showPlayerError(msg) {

@@ -6,6 +6,7 @@ const { getLatest, getSchedule, getByGenre, searchAnoboy } = require("../lib/ano
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
   if (req.method === "OPTIONS") return res.status(200).end()
 
   const { target = "latest", name = "action", page = "1" } = req.query

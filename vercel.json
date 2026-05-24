@@ -32,7 +32,7 @@
     },
     {
       "source": "/api/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "s-maxage=120, stale-while-revalidate=60" }]
+      "headers": [{ "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, max-age=0" }]
     },
     {
       "source": "/(.*\\.html)",

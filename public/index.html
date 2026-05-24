@@ -560,7 +560,11 @@ function renderSchedDay(day) {
   const items = scheduleData[day] || []
   const cont  = document.getElementById('sched-content')
   if (!items.length) {
-    cont.innerHTML = `<div class="sched-empty">Tidak ada jadwal untuk hari ${day}.</div>`
+    const totalAll = Object.values(scheduleData).reduce((a,v) => a + (v||[]).length, 0)
+    const msg = totalAll === 0
+      ? `<div class="sched-empty">Jadwal belum tersedia — sumber sedang tidak bisa diakses. <a href="#" onclick="loadSchedule();return false" style="color:var(--gold)">Coba lagi</a></div>`
+      : `<div class="sched-empty">Tidak ada jadwal untuk hari ${day}.</div>`
+    cont.innerHTML = msg
     return
   }
   cont.innerHTML = `<div class="sched-list">${items.map(it => {

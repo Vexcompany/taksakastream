@@ -3,10 +3,14 @@
   "buildCommand": "echo 'No build needed'",
   "outputDirectory": "public",
   "functions": {
-    "api/search.js":  { "maxDuration": 30 },
-    "api/detail.js":  { "maxDuration": 30 },
-    "api/episode.js": { "maxDuration": 30 },
-    "api/stream.js":  { "maxDuration": 60 }
+    "api/search.js":   { "maxDuration": 30 },
+    "api/detail.js":   { "maxDuration": 30 },
+    "api/episode.js":  { "maxDuration": 30 },
+    "api/stream.js":   { "maxDuration": 60 },
+    "api/latest.js":   { "maxDuration": 30 },
+    "api/genre.js":    { "maxDuration": 30 },
+    "api/schedule.js": { "maxDuration": 30 },
+    "api/debug.js":    { "maxDuration": 30 }
   },
   "routes": [
     {
@@ -18,27 +22,21 @@
       },
       "continue": true
     },
-    {
-      "src": "/",
-      "dest": "/public/index.html"
-    },
-    {
-      "src": "/((?!api/).*)",
-      "dest": "/public/$1"
-    }
+    { "src": "/", "dest": "/public/index.html" },
+    { "src": "/((?!api/).*)", "dest": "/public/$1" }
   ],
   "headers": [
     {
+      "source": "/api/schedule",
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=3600, stale-while-revalidate=300" }]
+    },
+    {
       "source": "/api/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=60, stale-while-revalidate=30" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "s-maxage=120, stale-while-revalidate=60" }]
     },
     {
       "source": "/(.*\\.html)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
     }
   ]
 }

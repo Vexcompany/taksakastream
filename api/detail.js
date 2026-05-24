@@ -6,9 +6,12 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type")
   if (req.method === "OPTIONS") return res.status(200).end()
 
-  const { url } = req.query
-  if (!url) {
-    return res.status(400).json({ status: false, message: "Parameter ?url wajib diisi" })
+  let { url, mal_id } = req.query
+  if (!url && !mal_id) {
+    return res.status(400).json({ status: false, message: "Parameter ?url atau ?mal_id wajib diisi" })
+  }
+  if (!url && mal_id) {
+    url = `https://myanimelist.net/anime/${mal_id}`
   }
 
   try {

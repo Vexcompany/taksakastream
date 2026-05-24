@@ -11,6 +11,10 @@ module.exports = async function handler(req, res) {
     const result = await getSchedule()
     return res.status(200).json({ status: true, ...result })
   } catch (e) {
-    return res.status(500).json({ status: false, message: e.message })
+    // Avoid returning HTTP 500 to the frontend for transient upstream errors (rate limits, timeouts).
+    // Instead return a graceful JSON payload the frontend can handle and display.
+    console.error('api/schedule error:', e && e.stack ? e.stack : e)
+    const msg = e?.message || 'Gagal mengambil jadwal'
+    return res.status(200).json({ status: false, message: msg, data: { schedule: {}, day_order: [] } })
   }
 }

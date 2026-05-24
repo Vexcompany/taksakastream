@@ -4,7 +4,7 @@
   "description": "TaksakaStream — Anime API & Frontend powered by Anoboy scraper",
   "main": "lib/anoboy.js",
   "engines": {
-    "node": ">=18.x"
+    "node": ">=24.x"
   },
   "dependencies": {
     "cheerio": "^1.0.0"

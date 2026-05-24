@@ -437,9 +437,10 @@ const BASE = window.location.origin
 document.getElementById('base-url-disp').textContent = BASE
 
 // ─── STATE ──────────────────────────────────────────
-let curAnimeUrl = null
-let curEpisodes = []
-let curEpUrl    = null
+let curAnimeUrl   = null
+let curAnimeTitle = null
+let curEpisodes   = []
+let curEpUrl      = null
 let gridMode    = 'latest'   // 'latest' | genre slug
 let gridPage    = 1
 let gridMaxPage = 1
@@ -699,7 +700,7 @@ async function loadAuthConfig() {
           callback: handleGoogleCredentialResponse,
         })
         window.google.accounts.id.renderButton(document.getElementById('google-login-button'), {
-          theme: 'outline', size: 'large', width: '100%', text: 'signin_with', shape: 'rectangular'
+          theme: 'outline', size: 'large', width: 300, text: 'signin_with', shape: 'rectangular'
         })
       }
       document.getElementById('auth-google-section').style.display = 'block'
@@ -807,7 +808,8 @@ async function openDetail(url) {
     const data = await res.json()
     if (!data.status) throw new Error(data.message)
     const d = data.data
-    curEpisodes = d.episode_list || []
+    curEpisodes   = d.episode_list || []
+    curAnimeTitle = d.title || null
 
     const poster = d.thumbnail
       ? `<img src="${d.thumbnail}" alt="${d.title}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block" onerror="this.parentNode.innerHTML='🎬'">`
@@ -877,9 +879,16 @@ async function openPlayer(idx) {
   document.getElementById('p-ttl').textContent  = ep.title || `Episode ${ep.episode}`
   document.getElementById('p-meta').innerHTML   = ''
 
+  // Bangun URL stream — kirim title+ep agar backend bisa cari URL anoboy via search
+  // jika ep.url null (Jikan tidak punya URL anoboy)
+  const streamParams = new URLSearchParams()
+  if (ep.url && ep.url !== 'null') streamParams.set('q', ep.url)
+  if (curAnimeTitle) streamParams.set('title', curAnimeTitle)
+  if (ep.episode)    streamParams.set('ep',    ep.episode)
+
   try {
     ptxt.textContent = 'Menghubungi TaksakaAPI...'
-    const res  = await fetch(`${BASE}/api/stream?q=${encodeURIComponent(ep.url)}`, {
+    const res  = await fetch(`${BASE}/api/stream?${streamParams.toString()}`, {
       headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
     })
     const data = await res.json()
@@ -897,30 +906,40 @@ async function openPlayer(idx) {
           hls.loadSource(data.stream_url)
           hls.attachMedia(vid)
           hls.on(Hls.Events.MANIFEST_PARSED, () => { vload.style.display='none'; vid.play().catch(()=>{}) })
-          hls.on(Hls.Events.ERROR, (_,d) => { if(d.fatal) useIframe(data.stream_url||ep.url) })
+          hls.on(Hls.Events.ERROR, (_,d) => { if(d.fatal) useIframe(data.stream_url) })
           vid._hls = hls
         } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
           vid.src = data.stream_url
           vid.addEventListener('loadedmetadata', ()=>{ vload.style.display='none'; vid.play() },{once:true})
-        } else { useIframe(ep.url) }
+        } else { showPlayerError('Browser tidak mendukung HLS') }
       } else {
         vid.src = data.stream_url
         vid.addEventListener('loadeddata',  ()=>{ vload.style.display='none' },{once:true})
-        vid.addEventListener('error',       ()=>{ useIframe(ep.url) },{once:true})
+        vid.addEventListener('error',       ()=>{ showPlayerError('Video gagal dimuat') },{once:true})
         vid.load(); vid.play().catch(()=>{})
         vload.style.display = 'none'
       }
+    } else if (data.stream_url) {
+      useIframe(data.stream_url)
     } else {
-      useIframe(data.stream_url || ep.url)
+      showPlayerError(data.message || 'Stream tidak tersedia')
     }
-  } catch { useIframe(ep.url) }
+  } catch(err) { showPlayerError(err.message || 'Terjadi kesalahan') }
 }
 
 function useIframe(src) {
+  if (!src || src === 'null') { showPlayerError('URL video tidak tersedia'); return }
   document.getElementById('vbox').innerHTML =
     `<iframe src="${src}" style="width:100%;height:100%;border:none" allowfullscreen allow="autoplay;fullscreen"></iframe>`
   document.getElementById('p-meta').insertAdjacentHTML('beforeend',
     '<span class="ptag" style="color:#f87171">Iframe Mode</span>')
+}
+
+function showPlayerError(msg) {
+  const vload = document.getElementById('vload')
+  if (vload) vload.style.display = 'none'
+  document.getElementById('vbox').innerHTML =
+    `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f87171;font-size:14px;padding:20px;text-align:center">⚠️ ${msg}</div>`
 }
 
 function backFromPlayer() {

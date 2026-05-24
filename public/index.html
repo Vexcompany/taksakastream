@@ -440,7 +440,7 @@ async function loadLatest(page = 1) {
     else            { grid.insertAdjacentHTML('beforeend', html) }
 
     gridPage    = page
-    gridMaxPage = data.data.total_pages || 1
+    gridMaxPage = data.data.total_pages || (data.data.results.length >= 18 ? page + 5 : page)
     document.getElementById('grid-ttl').textContent = '⚡ Update Terbaru'
     document.getElementById('grid-page-info').textContent = `Hal ${page}`
     document.getElementById('load-more-btn').style.display = gridPage < gridMaxPage ? 'block' : 'none'
@@ -501,7 +501,7 @@ async function loadGenrePage(genre, page) {
     else            { grid.insertAdjacentHTML('beforeend', html) }
 
     gridPage    = page
-    gridMaxPage = data.data.total_pages || 1
+    gridMaxPage = data.data.total_pages || (data.data.results.length >= 18 ? page + 5 : page)
     document.getElementById('grid-ttl').textContent = `📂 Genre: ${genre.charAt(0).toUpperCase()+genre.slice(1)}`
     document.getElementById('grid-page-info').textContent = `Hal ${page} / ${gridMaxPage}`
     document.getElementById('load-more-btn').style.display = gridPage < gridMaxPage ? 'block' : 'none'

@@ -7,14 +7,20 @@ module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
   if (req.method === "OPTIONS") return res.status(200).end()
 
-  // Endpoint ini publik — tidak perlu token
-  const episodeUrl = req.query.q
-  if (!episodeUrl) {
-    return res.status(400).json({ status: false, message: "Parameter ?q=<episode_url> wajib diisi" })
+  // Endpoint publik — tidak perlu token
+  // ?q    = URL episode (anoboy), boleh null/kosong jika pakai title+ep
+  // ?title = judul anime (untuk fallback search anoboy)
+  // ?ep   = nomor episode (untuk fallback search anoboy)
+  const episodeUrl  = req.query.q && req.query.q !== "null" ? req.query.q : null
+  const animeTitle  = req.query.title ? decodeURIComponent(req.query.title) : null
+  const episodeNum  = req.query.ep    ? req.query.ep : null
+
+  if (!episodeUrl && !animeTitle) {
+    return res.status(400).json({ status: false, message: "Parameter ?q atau ?title+?ep wajib diisi" })
   }
 
   try {
-    const result = await getStreamUrl(episodeUrl)
+    const result = await getStreamUrl(episodeUrl, animeTitle, episodeNum)
     const { title, stream_url, type, headers, provider, fallback, fallback_reason } = result.data
     return res.status(200).json({
       status: result.code === 200,
